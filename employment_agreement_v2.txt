@@ -1,0 +1,22 @@
+EMPLOYMENT AGREEMENT - VERSION 2
+
+Employee: Ananya Sharma
+Company: Example Technologies
+
+1. Salary
+The employee will receive a monthly salary of ₹50,000.
+
+2. Start Date
+Employment begins on 1 October 2026.
+
+3. Notice Period
+Either party may terminate this agreement by providing 60 days written notice.
+
+4. Company Property
+The employee must return company property within 7 days after termination.
+
+5. Renewal
+The agreement automatically renews for one year unless either party provides written notice 30 days before expiry.
+
+6. Confidentiality
+The employee must keep company confidential information private during and after employment.

@@ -1,0 +1,24 @@
+FICTIONAL SAMPLE - EMPLOYMENT AGREEMENT - VERSION 2
+
+This fictional agreement is provided only to demonstrate the NyayLens document workspace. The people and company below are invented.
+
+Parties: Northstar Labs and Asha Mehta.
+Effective date: August 12, 2025.
+
+Compensation: The Company will pay the Employee INR 25,000 per month on the last working day of each month.
+
+Working hours: The Employee will work 40 hours per week, Monday through Friday.
+
+Paid leave: The Employee may take 18 days of paid leave each year with reasonable prior notice.
+
+Confidentiality: The Employee shall keep confidential all non-public business, customer, and technical information during and after employment.
+
+Work product: Work product created in the course of employment belongs to Northstar Labs.
+
+Termination: Either party may terminate this agreement by giving written notice.
+
+Notice requirement: The Employee shall provide sixty days prior written notice before leaving the Company.
+
+Company property: The Employee must return company property at the end of employment.
+
+Renewal: This agreement renews automatically for successive one-year terms unless either party gives written notice of non-renewal.

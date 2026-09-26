@@ -1,0 +1,19 @@
+FICTIONAL SAMPLE - RESIDENTIAL LEASE
+
+This fictional lease is provided only to demonstrate the NyayLens document workspace. The people and property below are invented.
+
+Parties: Mira Sen (Landlord) and Kabir Rao (Tenant).
+Property: 18 Example Lane, Sample City.
+Lease term: September 1, 2025 through August 31, 2026.
+
+Rent: The Tenant shall pay INR 18,500 per month on or before the fifth day of each month.
+
+Security deposit: The Tenant shall pay a refundable security deposit of INR 37,000 before moving in, subject to deductions described in this lease.
+
+Utilities: The Tenant is responsible for electricity and internet charges during the lease term.
+
+Repairs: The Landlord is responsible for structural repairs. The Tenant must promptly report any damage or maintenance issue.
+
+Notice: Either party must give sixty days written notice before ending the lease early, subject to applicable law.
+
+Inspection: The Landlord may request a property inspection with reasonable advance notice.
