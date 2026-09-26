@@ -56,9 +56,9 @@ export default function AuthPage({ onAuthenticated }: AuthPageProps) {
         <h1 id="auth-title">{mode === "signup" ? "Create your account" : "Welcome back"}</h1>
         <p className="auth-subtitle">{mode === "signup" ? "Sign up to open your NyayLens workspace." : "Log in to continue to your NyayLens workspace."}</p>
 
-        <div className="auth-tabs" role="tablist" aria-label="Authentication">
-          <button type="button" role="tab" aria-selected={mode === "signup"} className={mode === "signup" ? "selected" : ""} onClick={() => switchMode("signup")}>Sign Up</button>
-          <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "selected" : ""} onClick={() => switchMode("login")}>Login</button>
+        <div className="auth-tabs" role="group" aria-label="Choose authentication action">
+          <button type="button" aria-pressed={mode === "signup"} className={mode === "signup" ? "selected" : ""} onClick={() => switchMode("signup")}>Sign Up</button>
+          <button type="button" aria-pressed={mode === "login"} className={mode === "login" ? "selected" : ""} onClick={() => switchMode("login")}>Login</button>
         </div>
 
         <form className="auth-form" onSubmit={submit}>

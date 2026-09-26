@@ -12,10 +12,20 @@ const USERS_KEY = "nyaylens.demoUsers.v1";
 const SESSION_KEY = "nyaylens.demoSession.v1";
 const PBKDF2_ITERATIONS = 210_000;
 
+function isStoredUser(value: unknown): value is StoredUser {
+  if (typeof value !== "object" || value === null) return false;
+  return (
+    "fullName" in value && typeof value.fullName === "string" &&
+    "email" in value && typeof value.email === "string" &&
+    "salt" in value && typeof value.salt === "string" && /^[a-f0-9]{32}$/i.test(value.salt) &&
+    "passwordHash" in value && typeof value.passwordHash === "string" && /^[a-f0-9]{64}$/i.test(value.passwordHash)
+  );
+}
+
 function getStoredUsers(): StoredUser[] {
   try {
     const value: unknown = JSON.parse(localStorage.getItem(USERS_KEY) ?? "[]");
-    return Array.isArray(value) ? (value as StoredUser[]) : [];
+    return Array.isArray(value) ? value.filter(isStoredUser) : [];
   } catch {
     return [];
   }
@@ -49,6 +59,15 @@ function saveSession(user: AuthUser): void {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
 }
 
+function matchesPasswordHash(candidate: string, expected: string): boolean {
+  let difference = candidate.length ^ expected.length;
+  const length = Math.max(candidate.length, expected.length);
+  for (let index = 0; index < length; index += 1) {
+    difference |= (candidate.charCodeAt(index) || 0) ^ (expected.charCodeAt(index) || 0);
+  }
+  return difference === 0;
+}
+
 export function getCurrentUser(): AuthUser | null {
   try {
     const value: unknown = JSON.parse(sessionStorage.getItem(SESSION_KEY) ?? "null");
@@ -73,7 +92,12 @@ export async function signUp(
   email: string,
   password: string,
 ): Promise<AuthUser> {
+  if (!fullName.trim()) throw new Error("Enter your full name.");
   const normalizedEmail = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    throw new Error("Enter a valid email address.");
+  }
+  if (password.length < 8) throw new Error("Use a password with at least 8 characters.");
   const users = getStoredUsers();
   if (users.some((user) => user.email === normalizedEmail)) {
     throw new Error("An account with this email already exists. Please log in.");
@@ -95,7 +119,7 @@ export async function signUp(
 export async function logIn(email: string, password: string): Promise<AuthUser> {
   const normalizedEmail = email.trim().toLowerCase();
   const user = getStoredUsers().find((item) => item.email === normalizedEmail);
-  if (!user || (await hashPassword(password, user.salt)) !== user.passwordHash) {
+  if (!user || !matchesPasswordHash(await hashPassword(password, user.salt), user.passwordHash)) {
     throw new Error("Email or password is incorrect.");
   }
   const sessionUser = { fullName: user.fullName, email: user.email };

@@ -2,7 +2,7 @@
 
 > **Understand. Detect. Compare. Ask. Act.**
 
-NyayLens is a **GenAI-powered legal document intelligence platform** designed to make complex legal documents easier to understand and navigate.
+NyayLens is a local-first legal document intelligence demo designed to make complex legal documents easier to understand and navigate. Its current analysis uses deterministic text extraction and matching; an external generative AI provider is not connected.
 
 Instead of functioning as a generic chatbot, NyayLens works directly with uploaded documents to extract important information, identify obligations and deadlines, answer document-grounded questions, compare document versions, and organize practical next steps.
 
@@ -73,7 +73,7 @@ NyayLens provides a readable document preview while preserving the extracted doc
 
 ---
 
-## 🧠 2. AI-Powered Document Analysis
+## 🧠 2. Local Document Analysis
 
 NyayLens analyzes uploaded documents and extracts information such as:
 
@@ -261,6 +261,10 @@ The system is designed to:
 
 NyayLens does **not** determine whether a user should sign a contract, guarantee legal outcomes, or replace professional legal advice.
 
+## Prototype Authentication and Data Safety
+
+The current email/password flow is demo authentication implemented in the browser. Passwords are stored as salted PBKDF2 hashes in local storage, while the profile-only session is held in session storage. Browser storage is user-editable and is not server-verified; this is not production authentication and must not protect real accounts or confidential data. All accounts in this prototype also share the local development API's in-memory document workspace. Use a server-side identity provider and per-user authorization before deployment.
+
 ---
 
 # 🏗️ System Architecture
@@ -311,7 +315,7 @@ NyayLens does **not** determine whether a user should sign a contract, guarantee
 * React
 * TypeScript
 * Vite
-* Tailwind CSS
+* CSS
 
 ### Backend
 
@@ -321,11 +325,9 @@ NyayLens does **not** determine whether a user should sign a contract, guarantee
 
 ### AI / NLP
 
-* Generative AI
-* Document-grounded question answering
-* Retrieval-based document analysis
-* Structured information extraction
-* Relevance-based retrieval
+* Deterministic keyword and regular-expression extraction
+* Document-grounded question answering with relevance matching
+* Text-based version comparison
 
 ### Document Processing
 
@@ -409,15 +411,7 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Create your local environment configuration using:
-
-```text
-.env.example
-```
-
-Add the required API configuration locally.
-
-**Never commit real API keys or secrets to GitHub.**
+No API key is required for the current deterministic demo. Setting `GEMINI_API_KEY` does not connect a generative AI provider.
 
 Start the backend:
 
@@ -459,6 +453,12 @@ Start the development server:
 
 ```powershell
 npm run dev
+```
+
+Run the frontend unit tests from the same `frontend` directory:
+
+```powershell
+npm test
 ```
 
 Open the local URL displayed by Vite, typically:

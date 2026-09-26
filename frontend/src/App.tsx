@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Route, Routes, useNavigate, useParams } from 'react-router-dom';
-import { AlertCircle, ArrowRight, Bell, BookOpen, Check, ChevronRight, Clock3, FileText, FolderOpen, GitCompareArrows, HelpCircle, Home, Info, LayoutDashboard, ListChecks, Menu, MessageSquare, Plus, Scale, Search, Settings, ShieldCheck, Sparkles, UploadCloud, X } from 'lucide-react';
+import { AlertCircle, ArrowRight, Bell, BookOpen, Check, ChevronRight, Clock3, FileText, FolderOpen, GitCompareArrows, Info, LayoutDashboard, ListChecks, Menu, MessageSquare, Plus, Scale, Settings, ShieldCheck, Sparkles, UploadCloud, X } from 'lucide-react';
 import type { Answer, DocumentData } from './types';
 import CompareWorkspace from './CompareWorkspace';
 import AuthPage from './AuthPage';
@@ -19,22 +19,157 @@ function App() {
   const [mobileMenu, setMobileMenu] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(() => getCurrentUser());
   const navigate = useNavigate();
-  useEffect(() => { api<DocumentData[]>('/api/documents').then(setDocuments).catch(() => undefined); }, []);
-  const refresh = () => api<DocumentData[]>('/api/documents').then(setDocuments).catch(() => undefined);
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    api<DocumentData[]>("/api/documents")
+      .then((items) => {
+        if (active) setDocuments(items);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [user]);
+  const refresh = () =>
+    api<DocumentData[]>("/api/documents")
+      .then(setDocuments)
+      .catch(() => undefined);
   const handleAuthentication = (authenticatedUser: AuthUser) => {
     setUser(authenticatedUser);
-    navigate('/dashboard');
+    navigate("/dashboard");
   };
   const handleLogout = () => {
     logOut();
     setUser(null);
-    navigate('/');
+    navigate("/");
   };
   if (!user) return <AuthPage onAuthenticated={handleAuthentication} />;
-  return <div className="app-shell">
-    <aside className={mobileMenu ? 'sidebar open' : 'sidebar'}><div className="brand"><span className="brand-mark"><Scale size={18}/></span><span>nyay<span>lens</span></span></div><button className="close-mobile" onClick={() => setMobileMenu(false)}><X/></button><div className="workspace-label">WORKSPACE</div><nav>{[['/dashboard','Overview',LayoutDashboard],['/documents','Documents',FolderOpen],['/compare','Compare',GitCompareArrows],['/ask','Ask AI',MessageSquare],['/action-plan','Action plan',ListChecks],['/lawyer-prep','Lawyer prep',Scale]].map(([to,label,Icon]) => <NavLink key={String(to)} to={String(to)} onClick={() => setMobileMenu(false)} className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}><Icon size={17}/><span>{String(label)}</span>{label === 'Documents' && documents.length > 0 && <small>{documents.length}</small>}</NavLink>)}</nav><div className="sidebar-bottom"><NavLink to="/settings" className="nav-item"><Settings size={17}/><span>Settings</span></NavLink><div className="privacy"><ShieldCheck size={15}/><span>Your documents stay private</span></div></div></aside>
-    <main className="main-content"><header className="topbar"><button className="menu-button" onClick={() => setMobileMenu(true)}><Menu/></button><div className="breadcrumb">Workspace <ChevronRight size={14}/> <span>NyayLens</span></div><div className="top-actions"><button className="icon-button" aria-label="Notifications"><Bell size={18}/></button><span className="profile-identity"><strong>{user.fullName}</strong><small>{user.email}</small></span><div className="avatar">{user.fullName.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()}</div><button className="logout-button" onClick={handleLogout}>Logout</button></div></header><Routes><Route path="/" element={<Landing/>}/><Route path="/dashboard" element={<Dashboard documents={documents} onRefresh={refresh} user={user}/>}/><Route path="/documents" element={<Documents documents={documents} onRefresh={refresh}/>}/><Route path="/documents/:id" element={<DocumentWorkspace/>}/><Route path="/compare" element={<CompareWorkspace documents={documents} onRefresh={refresh}/>}/><Route path="/compare/demo" element={<Compare documents={documents}/>}/><Route path="/ask" element={<AskPage documents={documents}/>}/><Route path="/action-plan" element={<ActionPlan/>}/><Route path="/lawyer-prep" element={<LawyerPrep/>}/><Route path="/settings" element={<SettingsPage/>}/><Route path="*" element={<Dashboard documents={documents} onRefresh={refresh} user={user}/>}/></Routes></main>
-  </div>;
+  return (
+    <div className="app-shell">
+      <aside id="workspace-sidebar" className={mobileMenu ? "sidebar open" : "sidebar"}>
+        <div className="brand">
+          <span className="brand-mark">
+            <Scale size={18} />
+          </span>
+          <span>
+            nyay<span>lens</span>
+          </span>
+        </div>
+        <button className="close-mobile" aria-label="Close navigation" onClick={() => setMobileMenu(false)}>
+          <X />
+        </button>
+        <div className="workspace-label">WORKSPACE</div>
+        <nav aria-label="Primary navigation">
+          {[
+            ["/dashboard", "Overview", LayoutDashboard],
+            ["/documents", "Documents", FolderOpen],
+            ["/compare", "Compare", GitCompareArrows],
+            ["/ask", "Ask AI", MessageSquare],
+            ["/action-plan", "Action plan", ListChecks],
+            ["/lawyer-prep", "Lawyer prep", Scale],
+          ].map(([to, label, Icon]) => (
+            <NavLink
+              key={String(to)}
+              to={String(to)}
+              onClick={() => setMobileMenu(false)}
+              className={({ isActive }) =>
+                isActive ? "nav-item active" : "nav-item"
+              }
+            >
+              <Icon size={17} />
+              <span>{String(label)}</span>
+              {label === "Documents" && documents.length > 0 && (
+                <small>{documents.length}</small>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="sidebar-bottom">
+          <NavLink to="/settings" className="nav-item">
+            <Settings size={17} />
+            <span>Settings</span>
+          </NavLink>
+          <div className="privacy">
+            <ShieldCheck size={15} />
+            <span>Your documents stay private</span>
+          </div>
+        </div>
+      </aside>
+      <main className="main-content">
+        <header className="topbar">
+          <button className="menu-button" aria-label="Open navigation" aria-expanded={mobileMenu} aria-controls="workspace-sidebar" onClick={() => setMobileMenu(true)}>
+            <Menu />
+          </button>
+          <div className="breadcrumb">
+            Workspace <ChevronRight size={14} /> <span>NyayLens</span>
+          </div>
+          <div className="top-actions">
+            <button className="icon-button" aria-label="Notifications">
+              <Bell size={18} />
+            </button>
+            <span className="profile-identity">
+              <strong>{user.fullName}</strong>
+              <small>{user.email}</small>
+            </span>
+            <div className="avatar">
+              {user.fullName
+                .split(/\s+/)
+                .map((part) => part[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase()}
+            </div>
+            <button className="logout-button" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+        </header>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route
+            path="/dashboard"
+            element={
+              <Dashboard
+                documents={documents}
+                onRefresh={refresh}
+                user={user}
+              />
+            }
+          />
+          <Route
+            path="/documents"
+            element={<Documents documents={documents} onRefresh={refresh} />}
+          />
+          <Route path="/documents/:id" element={<DocumentWorkspace />} />
+          <Route
+            path="/compare"
+            element={
+              <CompareWorkspace documents={documents} onRefresh={refresh} />
+            }
+          />
+          <Route
+            path="/compare/demo"
+            element={<Compare documents={documents} />}
+          />
+          <Route path="/ask" element={<AskPage documents={documents} />} />
+          <Route path="/action-plan" element={<ActionPlan />} />
+          <Route path="/lawyer-prep" element={<LawyerPrep />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route
+            path="*"
+            element={
+              <Dashboard
+                documents={documents}
+                onRefresh={refresh}
+                user={user}
+              />
+            }
+          />
+        </Routes>
+      </main>
+    </div>
+  );
 }
 
 function Landing() {
