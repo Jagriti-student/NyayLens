@@ -3,6 +3,8 @@ import { Link, NavLink, Route, Routes, useNavigate, useParams } from 'react-rout
 import { AlertCircle, ArrowRight, Bell, BookOpen, Check, ChevronRight, Clock3, FileText, FolderOpen, GitCompareArrows, HelpCircle, Home, Info, LayoutDashboard, ListChecks, Menu, MessageSquare, Plus, Scale, Search, Settings, ShieldCheck, Sparkles, UploadCloud, X } from 'lucide-react';
 import type { Answer, DocumentData } from './types';
 import CompareWorkspace from './CompareWorkspace';
+import AuthPage from './AuthPage';
+import { getCurrentUser, logOut, type AuthUser } from './auth';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -15,11 +17,23 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
 function App() {
   const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(() => getCurrentUser());
+  const navigate = useNavigate();
   useEffect(() => { api<DocumentData[]>('/api/documents').then(setDocuments).catch(() => undefined); }, []);
   const refresh = () => api<DocumentData[]>('/api/documents').then(setDocuments).catch(() => undefined);
+  const handleAuthentication = (authenticatedUser: AuthUser) => {
+    setUser(authenticatedUser);
+    navigate('/dashboard');
+  };
+  const handleLogout = () => {
+    logOut();
+    setUser(null);
+    navigate('/');
+  };
+  if (!user) return <AuthPage onAuthenticated={handleAuthentication} />;
   return <div className="app-shell">
     <aside className={mobileMenu ? 'sidebar open' : 'sidebar'}><div className="brand"><span className="brand-mark"><Scale size={18}/></span><span>nyay<span>lens</span></span></div><button className="close-mobile" onClick={() => setMobileMenu(false)}><X/></button><div className="workspace-label">WORKSPACE</div><nav>{[['/dashboard','Overview',LayoutDashboard],['/documents','Documents',FolderOpen],['/compare','Compare',GitCompareArrows],['/ask','Ask AI',MessageSquare],['/action-plan','Action plan',ListChecks],['/lawyer-prep','Lawyer prep',Scale]].map(([to,label,Icon]) => <NavLink key={String(to)} to={String(to)} onClick={() => setMobileMenu(false)} className={({isActive}) => isActive ? 'nav-item active' : 'nav-item'}><Icon size={17}/><span>{String(label)}</span>{label === 'Documents' && documents.length > 0 && <small>{documents.length}</small>}</NavLink>)}</nav><div className="sidebar-bottom"><NavLink to="/settings" className="nav-item"><Settings size={17}/><span>Settings</span></NavLink><div className="privacy"><ShieldCheck size={15}/><span>Your documents stay private</span></div></div></aside>
-    <main className="main-content"><header className="topbar"><button className="menu-button" onClick={() => setMobileMenu(true)}><Menu/></button><div className="breadcrumb">Workspace <ChevronRight size={14}/> <span>NyayLens</span></div><div className="top-actions"><button className="icon-button" aria-label="Notifications"><Bell size={18}/></button><div className="avatar">AM</div></div></header><Routes><Route path="/" element={<Landing/>}/><Route path="/dashboard" element={<Dashboard documents={documents} onRefresh={refresh}/>}/><Route path="/documents" element={<Documents documents={documents} onRefresh={refresh}/>}/><Route path="/documents/:id" element={<DocumentWorkspace/>}/><Route path="/compare" element={<CompareWorkspace documents={documents} onRefresh={refresh}/>}/><Route path="/compare/demo" element={<Compare documents={documents}/>}/><Route path="/ask" element={<AskPage documents={documents}/>}/><Route path="/action-plan" element={<ActionPlan/>}/><Route path="/lawyer-prep" element={<LawyerPrep/>}/><Route path="/settings" element={<SettingsPage/>}/><Route path="*" element={<Dashboard documents={documents} onRefresh={refresh}/>}/></Routes></main>
+    <main className="main-content"><header className="topbar"><button className="menu-button" onClick={() => setMobileMenu(true)}><Menu/></button><div className="breadcrumb">Workspace <ChevronRight size={14}/> <span>NyayLens</span></div><div className="top-actions"><button className="icon-button" aria-label="Notifications"><Bell size={18}/></button><span className="profile-identity"><strong>{user.fullName}</strong><small>{user.email}</small></span><div className="avatar">{user.fullName.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()}</div><button className="logout-button" onClick={handleLogout}>Logout</button></div></header><Routes><Route path="/" element={<Landing/>}/><Route path="/dashboard" element={<Dashboard documents={documents} onRefresh={refresh} user={user}/>}/><Route path="/documents" element={<Documents documents={documents} onRefresh={refresh}/>}/><Route path="/documents/:id" element={<DocumentWorkspace/>}/><Route path="/compare" element={<CompareWorkspace documents={documents} onRefresh={refresh}/>}/><Route path="/compare/demo" element={<Compare documents={documents}/>}/><Route path="/ask" element={<AskPage documents={documents}/>}/><Route path="/action-plan" element={<ActionPlan/>}/><Route path="/lawyer-prep" element={<LawyerPrep/>}/><Route path="/settings" element={<SettingsPage/>}/><Route path="*" element={<Dashboard documents={documents} onRefresh={refresh} user={user}/>}/></Routes></main>
   </div>;
 }
 
@@ -123,7 +137,120 @@ function PageHeader({
   );
 }
 
-function Dashboard({documents,onRefresh}:{documents:DocumentData[],onRefresh:()=>void}) { const navigate=useNavigate(); const start=async()=>{const d=await api<DocumentData>('/api/demo/employment'); await onRefresh(); navigate(`/documents/${d.id}`)}; return <div className="page"><PageHeader eyebrow="THURSDAY, 24 SEPTEMBER 2026" title="Good afternoon, Asha" subtitle="Understand your documents and know what to review next." action={<button className="button primary" onClick={start}><Plus size={16}/> Analyze document</button>}/><section className="quick-actions"><button onClick={() => navigate('/documents')}><UploadCloud/><span><strong>Upload document</strong><small>PDF, DOCX or TXT</small></span><ArrowRight size={16}/></button><button onClick={() => navigate('/compare')}><GitCompareArrows/><span><strong>Compare versions</strong><small>Find factual changes</small></span><ArrowRight size={16}/></button><button onClick={() => navigate('/ask')}><MessageSquare/><span><strong>Ask NyayLens</strong><small>Get grounded answers</small></span><ArrowRight size={16}/></button></section><div className="section-heading"><h2>Attention overview</h2><span>Across your workspace</span></div><div className="metric-grid">{[['Important clauses','06','red'],['Obligations','08','orange'],['Deadlines','03','blue'],['Items to review','05','yellow']].map(([label,value,tone])=><div className="metric" key={String(label)}><span className={`metric-dot ${tone}`}></span><small>{String(label)}</small><strong>{String(value)}</strong></div>)}</div><div className="section-heading"><h2>Recent documents</h2><Link to="/documents">View all <ArrowRight size={14}/></Link></div><div className="document-grid">{documents.filter(d=>d.id.startsWith('demo-') && !d.id.includes('v1') && !d.id.includes('v2')).slice(0,3).map(doc=><DocumentCard key={doc.id} doc={doc}/>)}{documents.length===0 && <div className="empty-state"><FileText/><p>Your document workspace is empty.</p><button className="button secondary" onClick={start}>Load demo agreement</button></div>}</div></div> }
+function Dashboard({
+  documents,
+  onRefresh,
+  user,
+}: {
+  documents: DocumentData[];
+  onRefresh: () => void;
+  user: AuthUser;
+}) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const navigate = useNavigate();
+  const start = async () => {
+    const d = await api<DocumentData>("/api/demo/employment");
+    await onRefresh();
+    navigate(`/documents/${d.id}`);
+  };
+  return (
+    <div className="page">
+      <PageHeader
+        eyebrow={now.toLocaleString(undefined, {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        })}
+        title={`Good ${now.getHours() < 12 ? "morning" : now.getHours() < 18 ? "afternoon" : "evening"}, ${user.fullName.split(/\s+/)[0]}`}
+        subtitle="Understand your documents and know what to review next."
+        action={
+          <button className="button primary" onClick={start}>
+            <Plus size={16} /> Analyze document
+          </button>
+        }
+      />
+      <section className="quick-actions">
+        <button onClick={() => navigate("/documents")}>
+          <UploadCloud />
+          <span>
+            <strong>Upload document</strong>
+            <small>PDF, DOCX or TXT</small>
+          </span>
+          <ArrowRight size={16} />
+        </button>
+        <button onClick={() => navigate("/compare")}>
+          <GitCompareArrows />
+          <span>
+            <strong>Compare versions</strong>
+            <small>Find factual changes</small>
+          </span>
+          <ArrowRight size={16} />
+        </button>
+        <button onClick={() => navigate("/ask")}>
+          <MessageSquare />
+          <span>
+            <strong>Ask NyayLens</strong>
+            <small>Get grounded answers</small>
+          </span>
+          <ArrowRight size={16} />
+        </button>
+      </section>
+      <div className="section-heading">
+        <h2>Attention overview</h2>
+        <span>Across your workspace</span>
+      </div>
+      <div className="metric-grid">
+        {[
+          ["Important clauses", "06", "red"],
+          ["Obligations", "08", "orange"],
+          ["Deadlines", "03", "blue"],
+          ["Items to review", "05", "yellow"],
+        ].map(([label, value, tone]) => (
+          <div className="metric" key={String(label)}>
+            <span className={`metric-dot ${tone}`}></span>
+            <small>{String(label)}</small>
+            <strong>{String(value)}</strong>
+          </div>
+        ))}
+      </div>
+      <div className="section-heading">
+        <h2>Recent documents</h2>
+        <Link to="/documents">
+          View all <ArrowRight size={14} />
+        </Link>
+      </div>
+      <div className="document-grid">
+        {documents
+          .filter(
+            (d) =>
+              d.id.startsWith("demo-") &&
+              !d.id.includes("v1") &&
+              !d.id.includes("v2"),
+          )
+          .slice(0, 3)
+          .map((doc) => (
+            <DocumentCard key={doc.id} doc={doc} />
+          ))}
+        {documents.length === 0 && (
+          <div className="empty-state">
+            <FileText />
+            <p>Your document workspace is empty.</p>
+            <button className="button secondary" onClick={start}>
+              Load demo agreement
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function DocumentCard({doc}:{doc:DocumentData}) { return <Link to={`/documents/${doc.id}`} className="document-card"><div className="file-icon"><FileText size={20}/></div><div className="card-top"><span className="status-pill"><span></span>Analyzed</span><button aria-label="More options" onClick={(e)=>e.preventDefault()}>•••</button></div><h3>{doc.filename}</h3><p>{doc.type} <span>·</span> {doc.page_count} pages</p><div className="card-footer"><span><AlertCircle size={14}/> {doc.clauses.length} findings</span><span><Clock3 size={14}/> {doc.obligations.length} obligations</span></div></Link> }
 
